@@ -1,18 +1,23 @@
 ---
 name: council
-description: Ask a council of four independent models (the newest Claude Fable, Claude Opus, GPT Sol and GPT Astra) for opinions on how to build something, to find issues, or to vote on options, then consolidate their answers. Use only when the user explicitly asks for the council by name, for example "council", "ask the council", "$council" (Codex) or "/council" (Claude Code). Never use it on your own initiative, for routine adversarial reviews or for PR review loops.
+description: Only when the user explicitly asks for the council ("ask the council", "use the council", "council round", "$council" in Codex, "/council" in Claude Code). Runs the request past four independent models (the newest Claude Fable, Claude Opus, GPT Sol and GPT Astra) and consolidates their opinions, issue lists or votes. Not for ordinary second opinions, routine adversarial reviews or PR review loops; incidental mentions such as file names or organisations don't invoke it.
 ---
 
 # Council
 
 Run the user's request past four independent council members and consolidate their answers. The user supplies the question; this skill defines only how the council runs.
 
+Before any tool call, check both:
+
+- **The user explicitly asked for the council.** A request for a second opinion, a review or feedback without naming the council is not one. Answer it normally.
+- **You are not a council member yourself.** If your task is a council brief (it says you are a council member), answer the brief directly. Don't run this skill and don't start subagents.
+
 The council is for focused questions the user wants several independent views on. It does not replace the adversarial reviews in `AGENTS.md`, and it never fixes, commits or merges anything on its own.
 
 ## Roles
 
-- **Members** each answer the request on their own.
-- **The main thread only orchestrates.** It resolves the members, writes the brief, starts the members, waits, and consolidates. It doesn't answer the request itself, doesn't add its own findings, options or votes, and doesn't break ties with its own opinion. It reports what the members said.
+- **Members** each answer the brief on their own.
+- **The main thread only orchestrates.** It resolves the members, writes the brief, starts the members, waits, and consolidates. It doesn't answer the request itself, doesn't add its own findings, options or votes, doesn't break ties with its own opinion, and doesn't answer members' questions. It reports what the members said.
 
 ## 1. Resolve the members
 
@@ -25,38 +30,54 @@ The council has four seats. Fill each one with the newest model of its family:
 | Sol | Codex | GPT Sol |
 | Astra | Codex | GPT Astra |
 
-Call `orchestrator_capabilities` (use `search` with the family name if a family isn't in the short list) and pick the highest version of each family. Run every member at high reasoning effort (`effort` for Claude, `reasoningEffort` for Codex) unless the user names another level. If the user names members or models, use those instead.
+Call `orchestrator_capabilities` (use `search` with the family name if a family isn't in the short list) and pick the highest version of each family. Run every member at high reasoning effort (`effort` for Claude, `reasoningEffort` for Codex) unless the user names another level.
 
-If a seat can't be filled, don't substitute another model. Run the council with the remaining members and say which seat is missing and why. If fewer than two members can run, stop and report.
+If the user names models:
 
-This skill needs T3 Code's `delegate_task` to reach both providers. Without it, report that the council can't run rather than falling back to single-provider subagents.
+- "X instead of Y" swaps that one seat;
+- a plain list ("council with Opus and Sol") replaces the whole roster.
+
+If a seat can't be filled, don't substitute another model. Run the council with the remaining members and say which seat is missing and why.
+
+Start every seat with T3 Code's `delegate_task`, including a seat that matches the main thread's own provider, model and settings, so all members run and report the same way. Without `delegate_task`, report that the council can't run rather than falling back to other subagents.
 
 ## 2. Work out the mode
 
-Read the mode from the user's request. A request can combine modes or define its own consolidation; the user's instructions always win over the defaults below.
+Read the mode from the user's request. The user's instructions on how to consolidate always win over the defaults below.
 
 | Mode | Typical request | Each member returns |
 | --- | --- | --- |
 | **Opinions** | How should we build X? What do you think of this plan? | A recommendation, its reasoning, the main risks, and the alternatives considered with why they lost |
 | **Issues** | Find problems in X. What could go wrong? | Findings, most severe first, each with severity (high, medium, low), location, a concrete failure scenario and confidence |
-| **Vote** | Which option is best? Pick the next experiments. | A full ranking of every option, best first, with one line of reasoning per option. Members may propose a missing option, but rank it separately. |
+| **Vote** | Which option is best? Pick the next experiments. | A ranking of every listed option, best first, each exactly once, with one line of reasoning per option. Members may propose a missing option separately, unranked. |
 
 If the mode is unclear, use Opinions.
 
+A vote needs one fixed list of options that every member ranks. When the options don't exist yet ("find the issues and vote on which to fix first", "collect ideas, then vote"), run it as two rounds (step 6): first collect, then vote on the consolidated list.
+
 ## 3. Brief the members
 
-Write one brief and send it, unchanged, to every member. It contains:
+Write one brief per round and send it, unchanged, to every member. It contains:
 
-- the user's request, verbatim;
-- the context needed to answer it: working directory, branch, diff range, files, plans, links, data, and any earlier council round's output the request builds on;
-- the mode and its return format from step 2;
-- the rules: answer independently, as one of several members whose answers are compared; stay read-only in the shared checkout (no edits, commits, pushes, PR comments or external messages); scratch files and small repros may go under `$TMPDIR`; state what you couldn't check instead of guessing.
+- **The question.** Restate the user's request in a clearly marked block, keeping the user's wording, but without the council invocation (`$council`, `/council`, "ask the council"), instructions meant for the main thread (how to consolidate, later rounds), and credentials or secrets (tokens, passwords, keys; write `<redacted>`). In a multi-round run, state only the current round's task and deliverable.
+- **Pinned context.** Working directory, branch and the exact HEAD SHA. For uncommitted work, save `git diff` (and untracked files that matter) to a file under `$TMPDIR` and point to it, so every member sees the same code. Add files, plans, links, data, and for later rounds the previous round's consolidated output.
+- **The mode and its return format** from step 2.
+- **The rules:**
+  - You are one of several independent council members whose answers are compared. Answer directly. Don't run the council skill, delegate or start subagents.
+  - Don't ask questions. State your assumptions and continue.
+  - Read-only in the shared checkout: no edits, commits, pushes, PR comments or external messages. Never change HEAD, the index or the stash, and don't run builds or tests that write into the tree. To inspect another ref or run something, use `git worktree add` under `$TMPDIR` and remove it afterwards.
+  - Scratch files and small repros go under `$TMPDIR`.
+  - Say what you couldn't check instead of guessing.
 
 The brief must not hint at an expected answer, the main thread's view, or another member's answer.
 
 ## 4. Run
 
-Start all members in parallel with `delegate_task`, one per seat, in the current checkout. Follow each delegate's `next` instructions and wait for every member. If one fails or stalls, cancel it, report it as missing, and consolidate the rest.
+Start all members in parallel with `delegate_task` (async, default shared isolation), one per seat. Keep every task ID. Follow each delegate's `next` instructions: don't poll, and end your turn while members run. Each completion wakes the thread.
+
+- A member **failed** when its delegate reports an error or ends without an answer. Note it and carry on.
+- When all members but some are done, post a short status (who answered, who is still running) and end the turn. Consolidate when the last one completes, or earlier if the user says so; then `task_cancel` the members still running and report them as missing.
+- If fewer than two members give a usable answer, don't consolidate. Report what you have and stop.
 
 ## 5. Consolidate
 
@@ -64,11 +85,19 @@ Name the model behind every point. Then consolidate per mode, unless the user sa
 
 - **Opinions:** where members agree; where they disagree, with each side's strongest argument (keep dissent, don't average it away); then the recommendation the majority supports, or no recommendation if there is no majority.
 - **Issues:** one deduplicated list. Merge findings that describe the same problem, sort by severity, then by how many members raised it. Mark each item with the members who found it. Keep single-member findings.
-- **Vote:** a table of every member's ranking, then a Borda count (with n options, first place earns n points, last earns 1), the winner, and the margin. Report ties as ties. Rank options members proposed themselves separately, with who proposed them.
+- **Vote:**
+  - A table of every member's ranking, then a Borda count: with n options, first place earns n points, last earns 1.
+  - Options a member left unranked earn 0 from that ballot, and tied options share their points. Flag every incomplete ballot.
+  - Report the winner and margin, or the top k when the user asked for several picks. Report ties as ties.
+  - List options members proposed themselves, with the proposer, unscored, unless a later round votes on them.
 
 ## 6. Multiple rounds
 
-Run one round unless the user asks for more. When the user describes a sequence, such as "collect ideas, consolidate them, then vote and keep the majority picks", run each round as described: the consolidated output of one round goes into the next round's brief verbatim, and the same members are reused.
+Run one round unless the user asks for more. When the user describes a sequence, such as "collect ideas, consolidate them, then vote and keep the majority picks", run each round as described:
+
+- Start every round with a fresh `delegate_task` per seat, with the same models and settings. Don't continue earlier member threads.
+- The next round's brief carries the previous round's consolidated output verbatim, so every member works from the same list.
+- Retry a seat that failed in the previous round once.
 
 ## 7. Report
 
@@ -76,6 +105,6 @@ Reply with:
 
 1. the consolidated result;
 2. one short section per member: model, effort and their answer in brief;
-3. notes: missing or failed seats and any member that couldn't verify part of its answer.
+3. notes: missing or failed seats, incomplete ballots, and anything a member couldn't verify.
 
 Then stop. Acting on the result is the user's call.
