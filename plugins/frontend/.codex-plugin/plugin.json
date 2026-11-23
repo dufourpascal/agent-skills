@@ -1,0 +1,14 @@
+{
+  "name": "frontend",
+  "version": "0.1.0",
+  "description": "Design distinctive frontend interfaces and build animation-rich HTML slide decks.",
+  "author": { "name": "dufourpascal" },
+  "repository": "https://github.com/dufourpascal/agent-skills",
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Frontend",
+    "shortDescription": "Frontend design and HTML slides",
+    "developerName": "dufourpascal",
+    "category": "Design"
+  }
+}

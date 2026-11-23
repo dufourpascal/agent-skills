@@ -1,0 +1,4 @@
+interface:
+  display_name: "Babysit PR"
+  short_description: "Watch a PR and close review feedback until review is clean"
+  default_prompt: "Use $babysit-pr to watch this PR until its AI review comes back clean."

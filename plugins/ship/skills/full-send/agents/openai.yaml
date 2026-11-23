@@ -1,0 +1,4 @@
+interface:
+  display_name: "Full Send"
+  short_description: "Plan, implement, review, merge, verify in PROD and close out autonomously"
+  default_prompt: "Use $full-send to take this change all the way through merge and a verified production release."

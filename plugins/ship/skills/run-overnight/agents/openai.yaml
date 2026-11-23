@@ -1,0 +1,4 @@
+interface:
+  display_name: "Run Overnight"
+  short_description: "Run experiments autonomously until 6am while you are away"
+  default_prompt: "Use $run-overnight to run these experiments autonomously until 6am."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Full Stop"
+  short_description: "Get a PR ready to merge, then handle the deploy, PROD checks and ticket after you merge"
+  default_prompt: "Use $full-stop to take this change to a reviewed, DEV-validated PR that is ready to merge, without merging it. After I merge, do whatever post-merge work the repo defines: watch the production deploy, validate in PROD and update the ticket."

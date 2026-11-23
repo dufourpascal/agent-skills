@@ -1,0 +1,14 @@
+{
+  "name": "ship",
+  "version": "0.1.0",
+  "description": "Take changes from plan to a merge-ready or merged PR, babysit PR reviews, and run autonomous overnight experiments. Built for T3 Code with Claude Code and Codex.",
+  "author": { "name": "dufourpascal" },
+  "repository": "https://github.com/dufourpascal/agent-skills",
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Ship",
+    "shortDescription": "Ship PRs end to end and run overnight work",
+    "developerName": "dufourpascal",
+    "category": "Developer Tools"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "dufourpascal",
+  "description": "Shared agent skills for Claude Code and Codex.",
+  "owner": { "name": "dufourpascal" },
+  "plugins": [
+    {
+      "name": "ship",
+      "source": "./plugins/ship",
+      "description": "Take changes from plan to a merge-ready or merged PR, babysit PR reviews, and run autonomous overnight experiments.",
+      "category": "development"
+    },
+    {
+      "name": "frontend",
+      "source": "./plugins/frontend",
+      "description": "Design distinctive frontend interfaces and build animation-rich HTML slide decks.",
+      "category": "design"
+    }
+  ]
+}
