@@ -4,7 +4,7 @@ Shared agent skills for [Claude Code](https://claude.com/claude-code) and [Codex
 
 | Plugin | Skills |
 | --- | --- |
-| `ship` | `full-send`, `full-stop`, `babysit-pr`, `run-overnight` |
+| `ship` | `full-send`, `full-stop`, `babysit-pr`, `run-overnight`, `council` |
 | `frontend` | `frontend-design`, `frontend-slides` |
 
 ## Install
