@@ -1,0 +1,4 @@
+interface:
+  display_name: "Council"
+  short_description: "Ask four models, then consolidate their answers"
+  default_prompt: "Use $council to get independent opinions from the council on this and consolidate them."

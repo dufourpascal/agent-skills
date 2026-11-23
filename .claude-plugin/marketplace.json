@@ -7,7 +7,7 @@
     {
       "name": "ship",
       "source": "./plugins/ship",
-      "description": "Take changes from plan to a merge-ready or merged PR, babysit PR reviews, and run autonomous overnight experiments.",
+      "description": "Take changes from plan to a merge-ready or merged PR, babysit PR reviews, run autonomous overnight experiments, and ask a multi-model council.",
       "category": "development"
     },
     {
