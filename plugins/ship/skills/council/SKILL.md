@@ -35,9 +35,10 @@ Call `orchestrator_capabilities` (use `search` with the family name if a family 
 If the user names models:
 
 - "X instead of Y" swaps that one seat;
+- "without Y" drops that seat;
 - a plain list ("council with Opus and Sol") replaces the whole roster.
 
-If a seat can't be filled, don't substitute another model. Run the council with the remaining members and say which seat is missing and why.
+If a seat can't be filled, don't substitute another model. Run the council with the remaining members and say which seat is missing and why. A council needs at least two members: if fewer than two can run, stop before starting any and say why.
 
 Start every seat with T3 Code's `delegate_task`, including a seat that matches the main thread's own provider, model and settings, so all members run and report the same way. Without `delegate_task`, report that the council can't run rather than falling back to other subagents.
 
@@ -59,15 +60,18 @@ A vote needs one fixed list of options that every member ranks. When the options
 
 Write one brief per round and send it, unchanged, to every member. It contains:
 
-- **The question.** Restate the user's request in a clearly marked block, keeping the user's wording, but without the council invocation (`$council`, `/council`, "ask the council"), instructions meant for the main thread (how to consolidate, later rounds), and credentials or secrets (tokens, passwords, keys; write `<redacted>`). In a multi-round run, state only the current round's task and deliverable.
-- **Pinned context.** Working directory, branch and the exact HEAD SHA. For uncommitted work, save `git diff` (and untracked files that matter) to a file under `$TMPDIR` and point to it, so every member sees the same code. Add files, plans, links, data, and for later rounds the previous round's consolidated output.
+- **The question.** Restate the user's request in a clearly marked block, keeping the user's wording, but without the council invocation (`$council`, `/council`, "ask the council") and without instructions meant for the main thread (how to consolidate, later rounds). In a multi-round run, state only the current round's task and deliverable.
+- **Pinned context.** Working directory, branch and the exact HEAD SHA. For uncommitted work, save `git diff` (and untracked files that matter) to a file under `$TMPDIR` and point to it. Add files, plans, links, data, and for later rounds the previous round's consolidated output.
 - **The mode and its return format** from step 2.
 - **The rules:**
   - You are one of several independent council members whose answers are compared. Answer directly. Don't run the council skill, delegate or start subagents.
   - Don't ask questions. State your assumptions and continue.
+  - The pinned SHA plus the saved diff are the code under review, not whatever the working tree holds when you read it. Read committed files with `git show <sha>:<path>`, apply the diff in your own worktree if you need the full tree, and flag it if the working tree no longer matches.
   - Read-only in the shared checkout: no edits, commits, pushes, PR comments or external messages. Never change HEAD, the index or the stash, and don't run builds or tests that write into the tree. To inspect another ref or run something, use `git worktree add` under `$TMPDIR` and remove it afterwards.
   - Scratch files and small repros go under `$TMPDIR`.
   - Say what you couldn't check instead of guessing.
+
+Keep credentials and secrets (tokens, passwords, keys, signed URLs) out of every part of the brief and any file it points to; write `<redacted>` instead.
 
 The brief must not hint at an expected answer, the main thread's view, or another member's answer.
 
@@ -75,8 +79,9 @@ The brief must not hint at an expected answer, the main thread's view, or anothe
 
 Start all members in parallel with `delegate_task` (async, default shared isolation), one per seat. Keep every task ID. Follow each delegate's `next` instructions: don't poll, and end your turn while members run. Each completion wakes the thread.
 
+- After starting the members, tell the user who is running and end the turn.
 - A member **failed** when its delegate reports an error or ends without an answer. Note it and carry on.
-- When all members but some are done, post a short status (who answered, who is still running) and end the turn. Consolidate when the last one completes, or earlier if the user says so; then `task_cancel` the members still running and report them as missing.
+- When some members are done and others still run, post a short status (who answered, who is still running) and end the turn. Consolidate when the last one completes, or earlier if the user says so; then `task_cancel` the members still running and report them as missing.
 - If fewer than two members give a usable answer, don't consolidate. Report what you have and stop.
 
 ## 5. Consolidate
@@ -87,7 +92,7 @@ Name the model behind every point. Then consolidate per mode, unless the user sa
 - **Issues:** one deduplicated list. Merge findings that describe the same problem, sort by severity, then by how many members raised it. Mark each item with the members who found it. Keep single-member findings.
 - **Vote:**
   - A table of every member's ranking, then a Borda count: with n options, first place earns n points, last earns 1.
-  - Options a member left unranked earn 0 from that ballot, and tied options share their points. Flag every incomplete ballot.
+  - Options a member left unranked earn 0 from that ballot, and tied options share their points. Flag every incomplete ballot, and say so if leaving the incomplete ballots out would change the winner.
   - Report the winner and margin, or the top k when the user asked for several picks. Report ties as ties.
   - List options members proposed themselves, with the proposer, unscored, unless a later round votes on them.
 
