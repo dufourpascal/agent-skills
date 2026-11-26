@@ -29,7 +29,7 @@ Answer in concise, structured output! Use bullet points for clarity if it makes 
 
 ## Waiting
 
-- Wait for a background command through its completion notice or a Monitor with an `until` loop. Never start a command with `sleep`.
+- Wait for a background command through its completion notice, and for a condition with a Monitor `until` loop. Never put `sleep` in front of another command.
 - `t3_background_wait` takes `taskIds`, and only IDs of background commands or Monitors you started. Subagent and `delegate_task` results arrive on their own: end the turn.
 - A delegated child finishes its own background work (tests, e2e, helpers) before it ends its turn.
 
