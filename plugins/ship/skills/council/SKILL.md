@@ -1,6 +1,6 @@
 ---
 name: council
-description: Only when the user explicitly asks for the council ("ask the council", "use the council", "council round", "$council" in Codex, "/council" in Claude Code). Runs the request past four independent models (the newest Claude Fable, Claude Opus, GPT Sol and GPT Astra) and consolidates their opinions, issue lists or votes. Not for ordinary second opinions, routine adversarial reviews or PR review loops; incidental mentions such as file names or organisations don't invoke it.
+description: Only when the user explicitly asks for the council ("ask the council", "use the council", "council round", "$council" in Codex, "/council" in Claude Code). Runs the request past four independent models (the newest Claude Fable, Claude Opus, GPT Sol and GPT Astra) and consolidates their opinions, issue lists or votes. Not for ordinary second opinions, routine code reviews or PR review loops; incidental mentions such as file names or organisations don't invoke it.
 ---
 
 # Council
@@ -12,7 +12,7 @@ Before any tool call, check both:
 - **The user explicitly asked for the council.** A request for a second opinion, a review or feedback without naming the council is not one. Answer it normally.
 - **You are not a council member yourself.** If your task is a council brief (it says you are a council member), answer the brief directly. Don't run this skill and don't start subagents.
 
-The council is for focused questions the user wants several independent views on. It does not replace the adversarial reviews in `AGENTS.md`, and it never fixes, commits or merges anything on its own.
+The council is for focused questions the user wants several independent views on. It does not replace the independent reviews in `AGENTS.md`, and it never fixes, commits or merges anything on its own.
 
 ## Roles
 

@@ -34,7 +34,10 @@ Never merge, enable auto-merge, add the PR to a merge queue, ask a bot to merge,
 1. **Intake.** Work out the starting point: idea, plan, branch or PR. Create or reuse a feature branch. If the repo tracks tickets, find or create this change's ticket as its `AGENTS.md` describes, and don't adopt one from a fuzzy match. Work out what applies after the merge: a deploy, PROD validation or a tracked ticket.
 2. **Plan.** If a plan exists, follow it and don't expand the scope. If not, write one, have Opus 5.5 and GPT-6.2-Sol each review it independently, and incorporate the valid points.
 3. **Implement** with Opus 5.5 at high reasoning. For large plans, use subagents with separate file ownership. Commit.
-4. **Adversarial review.** Send the same final diff to independent, read-only Opus 5.5 and GPT-6.2-Sol reviewers. Fix the valid findings and rerun the affected checks. If the fixes materially change behavior, run another review round.
+4. **Independent review.**
+    - **Before the first review**, list what the change touches and cover it with tests: every writer of each changed field or table (search the inserts, updates and deletes), every state of in-flight work (queued, running, settled, cancelled, unmounted mid-save), each changed limit at limit − 1, limit and limit + 1, and results that complete out of order or concurrently. Put the list in the review brief.
+    - **Review:** send the same final diff to independent, read-only Opus 5.5 and GPT-6.2-Sol reviewers. Fix the valid findings, each with its whole class as `AGENTS.md` says, and rerun the affected checks. If the fixes materially change behavior, run another review round.
+    - **Cap:** at most two re-check rounds after the first review, any new dual review included. Then file what is left as follow-up issues (or tickets, as the repo describes), list them in the PR and move on. Only a finding that loses data or breaks the change's main path keeps the loop going.
 5. **Validate in DEV**, as the repo defines it. Validate programmatically wherever possible: tests, type-check, lint, API calls. Where it's warranted, add an end-to-end check through the UI, delegated to GPT-6.2-Sol. Save the proof to `~/.full-stop/<repo>-<branch>/dev/`: command output, screenshots, recordings.
 6. **Open the PR.** Push and open a ready PR to `main` with a summary, the review outcome, the DEV proof in text form, pending human requirements and the ticket link if there is one. Link the PR to the ticket as the repo describes. Then run the `babysit-pr` skill until the review is clean.
 7. **Cover the final head.** If babysitting changed code, make sure the DEV proof and reviews cover the final pushed head. Rerun the affected checks and UI checks. If behavior changed materially, run another dual-model review.
@@ -43,13 +46,13 @@ Never merge, enable auto-merge, add the PR to a merge queue, ask a bot to merge,
 ### Hand off and wait for the merge
 
 9. **Hand off.** Post a readiness report as a PR comment: PR link and final SHA, decisions made, review findings and pushbacks, how DEV was tested, the proof folder, the readiness snapshot, pending human requirements, the ticket state, and what happens after the merge (or that nothing does, and why). State plainly that the PR is unmerged and waiting for the user. If anything applies after the merge, do step 10, then end your turn with the same report. Otherwise say that nothing watches the PR, clean up as in Stop and report, end your turn with the report and stop.
-10. **Watch the PR.** Cancel any `babysit-pr` fallback timer, stop any background command or Monitor, then call `watch_pull_request`. The watch wakes this thread on failed or passed checks, new comments or reviews, conflicts, and a close without merge. It does not wake on a merge: T3 ends the watch silently. So also create a fallback `schedule_task` bound to this thread (interval, every 10 minutes) that checks `gh pr view --json state,mergedAt,mergeCommit`; it is the only signal that the PR merged. A watched thread sits in the user's Working list, so call `t3_thread_organize` with `action: "pin"` (no `threadId`, this thread) to keep it at the top of the sidebar while it waits; the pin keeps the watch running. On each wake:
+10. **Watch the PR.** Cancel any `babysit-pr` fallback timer, stop any background command or Monitor, then call `watch_pull_request` with `until: "merged"`. The watch wakes this thread on failed or passed checks, new comments or reviews, conflicts, and once when the PR merges or closes. It is the only wait: don't create a `schedule_task`, timer or poll for the merge. A watched thread sits in the user's Working list, so call `t3_thread_organize` with `action: "pin"` (no `threadId`, this thread) to keep it at the top of the sidebar while it waits; the pin keeps the watch running. On each wake:
     - **New comments or reviews:** handle them as `babysit-pr` would, redo steps 7–8, update the readiness comment and keep watching.
     - **Failed checks or conflicts:** fix them if the fix is small and obvious, then redo steps 7–8. Otherwise post the blocker on the PR and keep watching.
-    - **Still open, nothing to do** (for example a fallback check): end the turn with a one-line status.
+    - **Still open, nothing to do** (for example passed checks): end the turn with a one-line status.
     - **Whenever you keep watching:** end the turn with a short status of what changed. Don't call `watch_pull_request` or `pin` again; both stay on.
-    - **Closed without merging:** delete the fallback schedule, call `unwatch_pull_request` and `unpin`, report and stop. Leave any ticket alone.
-    - **Merged:** delete the fallback schedule and continue with step 11. Stay pinned until the final report.
+    - **Closed without merging:** call `unwatch_pull_request` and `unpin`, report and stop. Leave any ticket alone.
+    - **Merged:** continue with step 11. Stay pinned until the final report.
 
 ### After the user merges
 
@@ -66,7 +69,7 @@ Stop instead of guessing when:
 - DEV validation fails and the cause isn't an obvious, small fix;
 - the plan turns out to be wrong or unsafe.
 
-Write the report with the current state and the exact blocker. Keep the PR unmerged, call `unwatch_pull_request` and `unpin`, and delete any fallback schedule or timer, including `babysit-pr`'s.
+Write the report with the current state and the exact blocker. Keep the PR unmerged, call `unwatch_pull_request` and `unpin`, and cancel any `babysit-pr` fallback timer.
 
 If the production deploy or PROD validation fails, don't close the ticket. Record the failure and its proof as the repo describes and leave the ticket open. If the cause is an obvious, small fix, take a follow-up PR through steps 2–10 on a new branch, link it to the ticket and hand it to the user to merge. Anything bigger: report it and stop.
 
