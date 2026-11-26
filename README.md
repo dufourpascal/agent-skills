@@ -36,7 +36,7 @@ codex plugin marketplace upgrade dufourpascal
 
 ## Global instructions
 
-[`instructions/AGENTS.md`](instructions/AGENTS.md) is a reference for global agent instructions (model routing, git safety, adversarial review). It isn't installed by the plugins. Copy what fits into your own `~/.codex/AGENTS.md` (and import that from `~/.claude/CLAUDE.md` with `@~/.codex/AGENTS.md`). Several skills follow the rules defined there.
+[`instructions/AGENTS.md`](instructions/AGENTS.md) is a reference for global agent instructions (model routing, git safety, independent review). It isn't installed by the plugins. Copy what fits into your own `~/.codex/AGENTS.md` (and import that from `~/.claude/CLAUDE.md` with `@~/.codex/AGENTS.md`). Several skills follow the rules defined there.
 
 ## Layout
 

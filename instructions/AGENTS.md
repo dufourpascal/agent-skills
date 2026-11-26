@@ -16,16 +16,22 @@ Answer in concise, structured output! Use bullet points for clarity if it makes 
 - Explicit model choices in the user's request override these defaults. If a required provider or integration is unavailable, report the limitation instead of silently substituting another route.
 - For larger implementation chunks, use subagents for planning, implementation, testing and validation, with separate file ownership for parallel edits.
 
-## Adversarial review
+## Independent review
 
-- After implementation and before creating a ready PR, obtain independent, read-only adversarial reviews from both Opus 5.5 and GPT-6.2-Sol through T3 delegation.
+- After implementation and before creating a ready PR, obtain independent, read-only code reviews from both Opus 5.5 and GPT-6.2-Sol through T3 delegation.
 - Have both reviewers examine the same final diff and relevant validation evidence. Assess findings, fix valid issues and repeat affected checks. Request follow-up review when fixes materially change the reviewed behavior.
 - One dual-model review covers implementation completion and PR creation when the diff is unchanged. Do not merge unless told to do so.
 - Brief reviewers with: the goal, the diff range, what CI already checks (type-check, lint, tests, repo static checks; don't redo them), and decisions already approved (don't re-argue them).
 - Reviewers report findings only, most severe first, each with a concrete failure scenario. No "checked and fine" sections, no nits, pre-existing or out-of-scope items unless asked.
-- Reviewers look beyond the diff: trace every consumer of changed shared code, try hostile and edge inputs (empty, huge, malformed, other formats), and check state after delete, reload, retry and concurrent edits. Write a small repro instead of reasoning when a claim is testable.
+- Reviewers look beyond the diff: trace every consumer of changed shared code, try edge-case inputs (empty, huge, malformed, other formats), and check state after delete, reload, retry and concurrent edits. Write a small repro instead of reasoning when a claim is testable.
 - Re-checks of fixes go to one reviewer (the one that raised the finding) on the fix delta only. Run a new dual review only when behavior changed materially.
 - When fixing a finding, fix its whole class: search for the same pattern elsewhere in the change and add a test that would have caught it.
+
+## Waiting
+
+- Wait for a background command through its completion notice, and for a condition with a Monitor `until` loop. Never put `sleep` in front of another command.
+- `t3_background_wait` takes `taskIds`, and only IDs of background commands or Monitors you started. Subagent and `delegate_task` results arrive on their own: end the turn.
+- A delegated child finishes its own background work (tests, e2e, helpers) before it ends its turn.
 
 ## Temp space
 

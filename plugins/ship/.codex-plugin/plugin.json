@@ -1,6 +1,6 @@
 {
   "name": "ship",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Take changes from plan to a merge-ready or merged PR, babysit PR reviews, run autonomous overnight experiments, and ask a multi-model council. Built for T3 Code with Claude Code and Codex.",
   "author": { "name": "dufourpascal" },
   "repository": "https://github.com/dufourpascal/agent-skills",
